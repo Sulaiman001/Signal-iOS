@@ -2187,7 +2187,7 @@ typedef NS_ENUM(NSInteger, MessagesRangeSizeMode) {
         }
     } else if (message.messageType == TSIncomingMessageAdapter && [self.thread isKindOfClass:[TSGroupThread class]]) {
         TSIncomingMessage *incomingMessage = (TSIncomingMessage *)message.interaction;
-        return [self.contactsManager attributedStringForMessageFooterWithPhoneIdentifier:incomingMessage.authorId];
+        return [self.contactsManager attributedContactOrProfileNameForPhoneIdentifier:incomingMessage.authorId];
     }
 
     return nil;

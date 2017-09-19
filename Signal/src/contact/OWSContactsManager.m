@@ -553,12 +553,12 @@ NSString *const kTSStorageManager_AccountLastNames = @"kTSStorageManager_Account
     return formattedName;
 }
 
-- (NSAttributedString *)attributedStringForMessageFooterWithPhoneIdentifier:(NSString *)recipientId
+- (NSString *)contactOrProfileNameForPhoneIdentifier:(NSString *)recipientId
 {
     // Prefer a saved name from system contacts, if available
     NSString *_Nullable savedContactName = [self cachedDisplayNameForRecipientId:recipientId];
     if (savedContactName.length > 0) {
-        return [[NSAttributedString alloc] initWithString:savedContactName];
+        return savedContactName;
     }
 
     NSString *_Nullable profileName = [self.profileManager profileNameForRecipientId:recipientId];
@@ -570,24 +570,7 @@ NSString *const kTSStorageManager_AccountLastNames = @"kTSStorageManager_Account
 
         NSString *numberAndProfileName =
             [NSString stringWithFormat:numberAndProfileNameFormat, recipientId, profileName];
-        return [[NSAttributedString alloc] initWithString:numberAndProfileName];
-    }
-
-    // else fall back to recipient id
-    return [[NSAttributedString alloc] initWithString:recipientId];
-}
-
-- (NSString *)contactOrProfileNameForPhoneIdentifier:(NSString *)recipientId
-{
-    // Prefer a saved name from system contacts, if available
-    NSString *_Nullable savedContactName = [self cachedDisplayNameForRecipientId:recipientId];
-    if (savedContactName.length > 0) {
-        return savedContactName;
-    }
-
-    NSString *_Nullable profileName = [self.profileManager profileNameForRecipientId:recipientId];
-    if (profileName.length > 0) {
-        return profileName;
+        return numberAndProfileName;
     }
 
     // else fall back to recipient id

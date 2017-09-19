@@ -88,39 +88,49 @@ class MessageMetadataViewController: OWSViewController
 
         let contactsManager = Environment.getCurrent().contactsManager!
 
+        // Sender?
         if let incomingMessage = message as? TSIncomingMessage {
             let senderId = incomingMessage.authorId
             let senderName = contactsManager.contactOrProfileName(forPhoneIdentifier:senderId)
-            rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_SENDER_ID",
-                                                         comment: "Label for the 'sender id' field of the 'message metadata' view."),
-                                 value:senderId))
-
-            if senderId != senderName {
-                if senderName.characters.count > 0 {
-                    rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_SENDER_NAME",
-                                                                 comment: "Label for the 'sender name' field of the 'message metadata' view."),
-                                         value:senderName))
-                }
-            }
+            rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_SENDER",
+                                                         comment: "Label for the 'sender' field of the 'message metadata' view."),
+                                 value:senderName))
         }
 
+        // Recipient(s)?
         let thread = message.thread
-        if let outgoingMessage = message as? TSOutgoingMessage {
-            if let contactThread = thread as? TSContactThread {
-                let recipientId = contactThread.contactIdentifier()
-                let threadName = contactsManager.contactOrProfileName(forPhoneIdentifier:recipientId)
 
-                rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_CONTACT_THREAD_ID",
-                                                             comment: "Label for the 'contact thread id' field of the 'message metadata' view."),
-                                     value:recipientId))
-                if recipientId != threadName {
-                    if threadName.characters.count > 0 {
-                        rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_CONTACT_THREAD_NAME",
-                                                                     comment: "Label for the 'contact thread name' field of the 'message metadata' view."),
-                                             value:threadName))
-                    }
-                }
+        if let outgoingMessage = message as? TSOutgoingMessage {
+            for recipientId in thread.recipientIdentifiers {
+                let recipientName = contactsManager.contactOrProfileName(forPhoneIdentifier:recipientId)
+
+                rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_RECIPIENT",
+                                                             comment: "Label for the 'recipient' field of the 'message metadata' view."),
+                                     value:recipientName))
+//                if recipientId != threadName {
+//                    if threadName.characters.count > 0 {
+//                        rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_CONTACT_THREAD_NAME",
+//                                                                     comment: "Label for the 'contact thread name' field of the 'message metadata' view."),
+//                                             value:threadName))
+//                    }
+//                }
             }
+
+//            if let contactThread = thread as? TSContactThread {
+//                let recipientId = contactThread.contactIdentifier()
+//                let threadName = contactsManager.stringForMessageFooter(forPhoneIdentifier:recipientId)
+//
+//                rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_CONTACT_THREAD_ID",
+//                                                             comment: "Label for the 'contact thread id' field of the 'message metadata' view."),
+//                                     value:recipientId))
+//                if recipientId != threadName {
+//                    if threadName.characters.count > 0 {
+//                        rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_CONTACT_THREAD_NAME",
+//                                                                     comment: "Label for the 'contact thread name' field of the 'message metadata' view."),
+//                                             value:threadName))
+//                    }
+//                }
+//            }
         }
 
         if let groupThread = thread as? TSGroupThread {
@@ -243,9 +253,46 @@ class MessageMetadataViewController: OWSViewController
                                      value:sourceFilename))
                 }
 
-                if attachment.isVoiceMessage() {
-                    rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_VOICE_MESSAGE",
-                                                                 comment: "Label for voice messages of the 'message metadata' view."),
+                if let attachmentStream = attachment as? TSAttachmentStream {
+                    var dataSource: DataSource?
+                    if let filePath = attachmentStream.filePath() {
+                        dataSource = DataSourcePath.dataSource(withFilePath:filePath)
+                    }
+                    if let dataSource = dataSource {
+                        let fileSize = dataSource.dataLength()
+                        rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_ATTACHMENT_FILE_SIZE",
+                                                                     comment: "Label for file size of attachments in the 'message metadata' view."),
+                                             value:ViewControllerUtils.formatFileSize(UInt(fileSize))))
+
+                        if (attachmentStream.isAnimated() ||
+                            attachmentStream.isImage() ||
+                            attachmentStream.isVideo() ||
+                            attachmentStream.isAudio()) {
+
+                            if let dataUTI = MIMETypeUtil.utiType(forMIMEType:contentType) {
+                                if attachment.isVoiceMessage() {
+                                    rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_VOICE_MESSAGE",
+                                                                                 comment: "Label for voice messages of the 'message metadata' view."),
+                                                         value:""))
+                                } else {
+                                    rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_MEDIA",
+                                                                                 comment: "Label for media messages of the 'message metadata' view."),
+                                                         value:""))
+                                }
+                                let attachment = SignalAttachment(dataSource : dataSource, dataUTI: dataUTI)
+                                let mediaMessageView = MediaMessageView(attachment:attachment)
+                                self.mediaMessageView = mediaMessageView
+                                rows.append(mediaMessageView)
+                            }
+                        }
+                    } else {
+                        rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_ATTACHMENT_MISSING_FILE",
+                                                                     comment: "Label for 'missing' attachments in the 'message metadata' view."),
+                                             value:""))
+                    }
+                } else {
+                    rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_ATTACHMENT_NOT_YET_DOWNLOADED",
+                                                                 comment: "Label for 'not yet downloaded' attachments in the 'message metadata' view."),
                                          value:""))
                 }
             }
@@ -274,6 +321,69 @@ class MessageMetadataViewController: OWSViewController
         if let lastRow = lastRow {
             lastRow.autoPinEdge(toSuperviewEdge:.bottom, withInset:20)
         }
+
+        if let mediaMessageView = mediaMessageView {
+            mediaMessageView.autoPinToSquareAspectRatio()
+        }
+    }
+
+    private func recipientStatus(forOutgoingMessage message: TSOutgoingMessage, recipientId: String) -> String {
+//        switch message.messageState {
+//            case .unsent:
+//            return NSLocalizedString("MESSAGE_STATUS_FAILED", comment:"message footer for failed messages")
+////        default:
+////            owsFail
+////            return ""
+//        }
+//        if message.messageState == .unsent {
+//            return NSLocalizedString("MESSAGE_STATUS_FAILED", comment:"message footer for failed messages")
+//        } else if message.messageState == .sentToService {
+//            NSString *text = (message.wasDelivered
+//                ? NSLocalizedString("MESSAGE_STATUS_DELIVERED", comment:"message footer for delivered messages")
+//                : NSLocalizedString("MESSAGE_STATUS_SENT", comment:"message footer for sent messages"));
+//            NSAttributedString *result = [[NSAttributedString alloc] initWithString:text];
+//            if (message.wasDelivered && message.readRecipientIds.count > 0) {
+//                NSAttributedString *checkmark = [[NSAttributedString alloc]
+//                    initWithString:@"\uf00c "
+//                    attributes:@{
+//                    NSFontAttributeName : [UIFont ows_fontAwesomeFont:10.f],
+//                    NSForegroundColorAttributeName : [UIColor ows_materialBlueColor],
+//                    }];
+//                NSAttributedString *spacing = [[NSAttributedString alloc] initWithString:@" "];
+//                result = [[checkmark rtlSafeAppend:spacing referenceView:self.view] rtlSafeAppend:result
+//                    referenceView:self.view];
+//            }
+//            
+//            // Show when it's the last message in the thread
+//            if (indexPath.item == [self.collectionView numberOfItemsInSection:indexPath.section] - 1) {
+//                [self updateLastDeliveredMessage:message];
+//                return result;
+//            }
+//            
+//            // Or when the next message is *not* an outgoing sent/delivered message.
+//            TSOutgoingMessage *nextMessage = [self nextOutgoingMessage:indexPath];
+//            if (nextMessage && nextMessage.messageState == TSOutgoingMessageStateUnsent) {
+//                [self updateLastDeliveredMessage:message];
+//                return result;
+//            }
+//        } else if message.isMediaBeingSent() {
+//            return [[NSAttributedString alloc] initWithString:NSLocalizedString("MESSAGE_STATUS_UPLOADING",
+//                comment:"message footer while attachment is uploading")];
+//        } else {
+//            OWSAssert(message.messageState == .attemptingOut)
+//            // Show an "..." ellisis icon.
+//            //
+//            // TODO: It'd be nice to animate this, but JSQMessageViewController doesn't give us a great way to do so.
+//            //       We already have problems with unstable cell layout; we don't want to exacerbate them.
+//            NSAttributedString *result =
+//                [[NSAttributedString alloc] initWithString:@"/"
+//                    attributes:@{
+//                    NSFontAttributeName : [UIFont ows_dripIconsFont:14.f],
+//                    }];
+//            return result;
+//        }
+
+        return ""
     }
 
     private func nameLabel(text: String) -> UILabel {
@@ -303,7 +413,7 @@ class MessageMetadataViewController: OWSViewController
         valueLabel.autoPinLeading(toTrailingOf:nameLabel, margin: 10)
         nameLabel.autoPinEdge(toSuperviewEdge:.top)
         valueLabel.autoPinEdge(toSuperviewEdge:.top)
-        valueLabel.autoPinEdge(toSuperviewEdge:.bottom)
+        nameLabel.autoPinEdge(toSuperviewEdge:.bottom)
 
 //        DispatchQueue.main.async {
 //            Logger.error("nameLabel: \(NSStringFromCGRect(nameLabel.frame)) \(name)")
