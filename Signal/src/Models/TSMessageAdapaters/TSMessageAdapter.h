@@ -23,6 +23,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) CGFloat mediaViewAlpha;
 @property (nonatomic, readonly) BOOL isMediaBeingSent;
 
++ (SEL)messageMetadataSelector;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -637,6 +637,7 @@ typedef NS_ENUM(NSInteger, MessagesRangeSizeMode) {
     [JSQMessagesCollectionViewCell registerMenuAction:saveSelector];
     SEL shareSelector = NSSelectorFromString(@"share:");
     [JSQMessagesCollectionViewCell registerMenuAction:shareSelector];
+    [JSQMessagesCollectionViewCell registerMenuAction:[TSMessageAdapter messageMetadataSelector]];
 
     [self initializeCollectionViewLayout];
     [self registerCustomMessageNibs];
@@ -756,8 +757,10 @@ typedef NS_ENUM(NSInteger, MessagesRangeSizeMode) {
         [[UIMenuItem alloc] initWithTitle:NSLocalizedString(@"EDIT_ITEM_SHARE_ACTION",
                                               @"Short name for edit menu item to share contents of media message.")
                                    action:shareSelector],
+        [[UIMenuItem alloc] initWithTitle:NSLocalizedString(@"EDIT_ITEM_MESSAGE_METADATA_ACTION",
+                                              @"Short name for edit menu item to show message metadata.")
+                                   action:[TSMessageAdapter messageMetadataSelector]],
     ];
-
 
     [((OWSMessagesToolbarContentView *)self.inputToolbar.contentView)ensureSubviews];
 
@@ -1762,7 +1765,19 @@ typedef NS_ENUM(NSInteger, MessagesRangeSizeMode) {
             withSender:(id)sender
 {
     id<OWSMessageData> messageData = [self messageAtIndexPath:indexPath];
-    [messageData performEditingAction:action];
+    if (action == [TSMessageAdapter messageMetadataSelector]) {
+        TSInteraction *interaction = messageData.interaction;
+        if ([interaction isKindOfClass:[TSIncomingMessage class]] ||
+            [interaction isKindOfClass:[TSOutgoingMessage class]]) {
+            TSMessage *message = (TSMessage *)interaction;
+            MessageMetadataViewController *view = [[MessageMetadataViewController alloc] initWithMessage:message];
+            [self.navigationController pushViewController:view animated:YES];
+        } else {
+            OWSFail(@"%@ Can't show message metadata for message of type: %@", self.tag, [interaction class]);
+        }
+    } else {
+        [messageData performEditingAction:action];
+    }
 }
 
 - (void)collectionView:(UICollectionView *)collectionView
