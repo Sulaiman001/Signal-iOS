@@ -784,6 +784,9 @@
 /* No comment provided by engineer. */
 "MESSAGE_COMPOSEVIEW_TITLE" = "New Message";
 
+/* Title for the 'message metadata' view. */
+"MESSAGE_METADATA_VIEW_TITLE" = "Message";
+
 /* message footer for delivered messages */
 "MESSAGE_STATUS_DELIVERED" = "Delivered";
 

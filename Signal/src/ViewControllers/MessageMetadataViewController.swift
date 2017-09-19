@@ -45,27 +45,17 @@ class MessageMetadataViewController: OWSViewController
 
     // MARK: View Lifecycle
 
-//    override func viewDidLoad() {
-//        super.viewDidLoad()
-//
-//        view.backgroundColor = UIColor.white
-//
-//        self.navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem:.stop,
-//                                                                target:self,
-//                                                                action:#selector(donePressed))
-//        self.navigationItem.title = dialogTitle()
-//
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        view.backgroundColor = UIColor.white
+
+        self.navigationItem.title = NSLocalizedString("MESSAGE_METADATA_VIEW_TITLE",
+                                                      comment: "Title for the 'message metadata' view.")
+
 //        createViews()
-//    }
-//
-//    private func dialogTitle() -> String {
-//        guard let filename = formattedFileName() else {
-//            return NSLocalizedString("ATTACHMENT_APPROVAL_DIALOG_TITLE",
-//                                     comment: "Title for the 'attachment approval' dialog.")
-//        }
-//        return filename
-//    }
-//
+    }
+
 //    override func viewWillAppear(_ animated: Bool) {
 //        super.viewWillAppear(animated)
 //
