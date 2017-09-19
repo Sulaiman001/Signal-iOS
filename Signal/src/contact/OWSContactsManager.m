@@ -577,6 +577,28 @@ NSString *const kTSStorageManager_AccountLastNames = @"kTSStorageManager_Account
     return [[NSAttributedString alloc] initWithString:recipientId];
 }
 
+- (NSString *)contactOrProfileNameForPhoneIdentifier:(NSString *)recipientId
+{
+    // Prefer a saved name from system contacts, if available
+    NSString *_Nullable savedContactName = [self cachedDisplayNameForRecipientId:recipientId];
+    if (savedContactName.length > 0) {
+        return savedContactName;
+    }
+
+    NSString *_Nullable profileName = [self.profileManager profileNameForRecipientId:recipientId];
+    if (profileName.length > 0) {
+        return profileName;
+    }
+
+    // else fall back to recipient id
+    return recipientId;
+}
+
+- (NSAttributedString *)attributedContactOrProfileNameForPhoneIdentifier:(NSString *)recipientId
+{
+    return [[NSAttributedString alloc] initWithString:[self contactOrProfileNameForPhoneIdentifier:recipientId]];
+}
+
 - (NSAttributedString *)attributedStringForConversationTitleWithPhoneIdentifier:(NSString *)recipientId
                                                                     primaryFont:(UIFont *)primaryFont
                                                                   secondaryFont:(UIFont *)secondaryFont

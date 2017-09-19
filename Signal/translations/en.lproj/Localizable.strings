@@ -787,6 +787,12 @@
 /* Label for the MIME type of attachments in the 'message metadata' view. */
 "MESSAGE_METADATA_VIEW_ATTACHMENT_MIME_TYPE" = "MIME type";
 
+/* Label for the 'contact thread name' field of the 'message metadata' view. */
+"MESSAGE_METADATA_VIEW_CONTACT_THREAD_NAME" = "Recipient";
+
+/* Label for the 'group name' field of the 'message metadata' view. */
+"MESSAGE_METADATA_VIEW_GROUP_NAME" = "Group";
+
 /* Label for the 'received date & time' field of the 'message metadata' view. */
 "MESSAGE_METADATA_VIEW_RECEIVED_DATE_TIME" = "Received";
 

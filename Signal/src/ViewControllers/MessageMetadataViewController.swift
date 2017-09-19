@@ -23,7 +23,6 @@ class MessageMetadataViewController: OWSViewController
 //    let attachment: SignalAttachment
 //
 //    var successCompletion : (() -> Void)?
-//
 
     // MARK: Initializers
 
@@ -62,18 +61,6 @@ class MessageMetadataViewController: OWSViewController
         mediaMessageView?.viewWillDisappear(animated)
     }
 
-//    override func viewWillAppear(_ animated: Bool) {
-//        super.viewWillAppear(animated)
-//
-//        ViewControllerUtils.setAudioIgnoresHardwareMuteSwitch(true)
-//    }
-//
-//    override func viewWillDisappear(_ animated: Bool) {
-//        super.viewWillDisappear(animated)
-//
-//        ViewControllerUtils.setAudioIgnoresHardwareMuteSwitch(false)
-//    }
-
     // MARK: - Create Views
 
     private func createViews() {
@@ -99,13 +86,16 @@ class MessageMetadataViewController: OWSViewController
 
         var rows = [UIView]()
 
+        let contactsManager = Environment.getCurrent().contactsManager!
+
         if let incomingMessage = message as? TSIncomingMessage {
+            let senderId = incomingMessage.authorId
+            let senderName = contactsManager.contactOrProfileName(forPhoneIdentifier:senderId)
             rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_SENDER_ID",
                                                          comment: "Label for the 'sender id' field of the 'message metadata' view."),
-                                 value:incomingMessage.authorId))
+                                 value:senderId))
 
-            let senderName = OWSProfileManager.shared().profileName(forRecipientId:incomingMessage.authorId)
-            if let senderName = senderName {
+            if senderId != senderName {
                 if senderName.characters.count > 0 {
                     rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_SENDER_NAME",
                                                                  comment: "Label for the 'sender name' field of the 'message metadata' view."),
@@ -114,24 +104,37 @@ class MessageMetadataViewController: OWSViewController
             }
         }
 
+        let thread = message.thread
         if let outgoingMessage = message as? TSOutgoingMessage {
-//            rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_SENDER_ID",
-//                                                         comment: "Label for the 'sender id' field of the 'message metadata' view."),
-//                                 value:incomingMessage.authorId))
-//            
-//            let senderName = OWSProfileManager.shared().profileName(forRecipientId:incomingMessage.authorId)
-//            if let senderName = senderName {
-//                if senderName.characters.count > 0 {
-//                    rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_SENDER_NAME",
-//                                                                 comment: "Label for the 'sender name' field of the 'message metadata' view."),
-//                                         value:senderName))
-//                }
-//            }
+            if let contactThread = thread as? TSContactThread {
+                let recipientId = contactThread.contactIdentifier()
+                let threadName = contactsManager.contactOrProfileName(forPhoneIdentifier:recipientId)
+
+                rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_CONTACT_THREAD_ID",
+                                                             comment: "Label for the 'contact thread id' field of the 'message metadata' view."),
+                                     value:recipientId))
+                if recipientId != threadName {
+                    if threadName.characters.count > 0 {
+                        rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_CONTACT_THREAD_NAME",
+                                                                     comment: "Label for the 'contact thread name' field of the 'message metadata' view."),
+                                             value:threadName))
+                    }
+                }
+            }
+        }
+
+        if let groupThread = thread as? TSGroupThread {
+            var groupName = groupThread.name()
+            if groupName.characters.count < 1 {
+                groupName = NSLocalizedString("NEW_GROUP_DEFAULT_TITLE", comment: "")
+            }
+
+            rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_GROUP_NAME",
+                                                         comment: "Label for the 'group name' field of the 'message metadata' view."),
+                                 value:groupName))
         }
 
         let dateFormatter = DateFormatter()
-//        dateFormatter.timeZone = TimeZone(abbreviation: "UTC")
-//        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
         dateFormatter.dateStyle = .short
         dateFormatter.timeStyle = .long
 
@@ -468,5 +471,4 @@ class MessageMetadataViewController: OWSViewController
 //            successCompletion?()
 //        })
 //    }
-//
 }
