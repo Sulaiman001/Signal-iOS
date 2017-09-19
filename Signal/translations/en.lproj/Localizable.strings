@@ -796,17 +796,17 @@
 /* Label for 'not yet downloaded' attachments in the 'message metadata' view. */
 "MESSAGE_METADATA_VIEW_ATTACHMENT_NOT_YET_DOWNLOADED" = "Not yet downloaded";
 
-/* Label for the 'contact thread id' field of the 'message metadata' view. */
-"MESSAGE_METADATA_VIEW_CONTACT_THREAD_ID" = "Recipient Id";
-
-/* Label for the 'contact thread name' field of the 'message metadata' view. */
-"MESSAGE_METADATA_VIEW_CONTACT_THREAD_NAME" = "Recipient";
+/* Label for the message body in the 'message metadata' view. */
+"MESSAGE_METADATA_VIEW_BODY_LABEL" = "Message";
 
 /* Label for the 'group name' field of the 'message metadata' view. */
 "MESSAGE_METADATA_VIEW_GROUP_NAME" = "Group";
 
 /* Label for media messages of the 'message metadata' view. */
 "MESSAGE_METADATA_VIEW_MEDIA" = "Media";
+
+/* Label for messages without a body or attachment in the 'message metadata' view. */
+"MESSAGE_METADATA_VIEW_NO_ATTACHMENT_OR_BODY" = "Message has no content or attachment.";
 
 /* Label for the 'received date & time' field of the 'message metadata' view. */
 "MESSAGE_METADATA_VIEW_RECEIVED_DATE_TIME" = "Received";

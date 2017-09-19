@@ -3,11 +3,8 @@
 //
 
 import Foundation
-//import MediaPlayer
 
-class MessageMetadataViewController: OWSViewController
-    //, OWSAudioAttachmentPlayerDelegate
-{
+class MessageMetadataViewController: OWSViewController {
 
     let TAG = "[MessageMetadataViewController]"
 
@@ -19,10 +16,6 @@ class MessageMetadataViewController: OWSViewController
 
     var scrollView: UIScrollView?
     var contentView: UIView?
-
-    //    let attachment: SignalAttachment
-    //
-    //    var successCompletion : (() -> Void)?
 
     // MARK: Initializers
 
@@ -88,54 +81,8 @@ class MessageMetadataViewController: OWSViewController
 
         let contactsManager = Environment.getCurrent().contactsManager!
 
-        // Sender?
-        if let incomingMessage = message as? TSIncomingMessage {
-            let senderId = incomingMessage.authorId
-            let senderName = contactsManager.contactOrProfileName(forPhoneIdentifier:senderId)
-            rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_SENDER",
-                                                         comment: "Label for the 'sender' field of the 'message metadata' view."),
-                                 value:senderName))
-        }
-
-        // Recipient(s)?
+        // Group?
         let thread = message.thread
-
-        if let outgoingMessage = message as? TSOutgoingMessage {
-            for recipientId in thread.recipientIdentifiers {
-                let recipientName = contactsManager.contactOrProfileName(forPhoneIdentifier:recipientId)
-                let recipientStatus = self.recipientStatus(forOutgoingMessage: outgoingMessage, recipientId: recipientId)
-
-                rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_RECIPIENT",
-                                                             comment: "Label for the 'recipient' field of the 'message metadata' view."),
-                                     value:recipientName,
-                                     subtitle:recipientStatus))
-
-                //                if recipientId != threadName {
-                //                    if threadName.characters.count > 0 {
-                //                        rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_CONTACT_THREAD_NAME",
-                //                                                                     comment: "Label for the 'contact thread name' field of the 'message metadata' view."),
-                //                                             value:threadName))
-                //                    }
-                //                }
-            }
-
-            //            if let contactThread = thread as? TSContactThread {
-            //                let recipientId = contactThread.contactIdentifier()
-            //                let threadName = contactsManager.stringForMessageFooter(forPhoneIdentifier:recipientId)
-            //
-            //                rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_CONTACT_THREAD_ID",
-            //                                                             comment: "Label for the 'contact thread id' field of the 'message metadata' view."),
-            //                                     value:recipientId))
-            //                if recipientId != threadName {
-            //                    if threadName.characters.count > 0 {
-            //                        rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_CONTACT_THREAD_NAME",
-            //                                                                     comment: "Label for the 'contact thread name' field of the 'message metadata' view."),
-            //                                             value:threadName))
-            //                    }
-            //                }
-            //            }
-        }
-
         if let groupThread = thread as? TSGroupThread {
             var groupName = groupThread.name()
             if groupName.characters.count < 1 {
@@ -147,6 +94,28 @@ class MessageMetadataViewController: OWSViewController
                                  value:groupName))
         }
 
+        // Sender?
+        if let incomingMessage = message as? TSIncomingMessage {
+            let senderId = incomingMessage.authorId
+            let senderName = contactsManager.contactOrProfileName(forPhoneIdentifier:senderId)
+            rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_SENDER",
+                                                         comment: "Label for the 'sender' field of the 'message metadata' view."),
+                                 value:senderName))
+        }
+
+        // Recipient(s)
+        if let outgoingMessage = message as? TSOutgoingMessage {
+            for recipientId in thread.recipientIdentifiers {
+                let recipientName = contactsManager.contactOrProfileName(forPhoneIdentifier:recipientId)
+                let recipientStatus = self.recipientStatus(forOutgoingMessage: outgoingMessage, recipientId: recipientId)
+
+                rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_RECIPIENT",
+                                                             comment: "Label for the 'recipient' field of the 'message metadata' view."),
+                                     value:recipientName,
+                                     subtitle:recipientStatus))
+            }
+        }
+
         let dateFormatter = DateFormatter()
         dateFormatter.dateStyle = .short
         dateFormatter.timeStyle = .long
@@ -156,7 +125,7 @@ class MessageMetadataViewController: OWSViewController
                                                      comment: "Label for the 'sent date & time' field of the 'message metadata' view."),
                              value:dateFormatter.string(from:sentDate)))
 
-        if let incomingMessage = message as? TSIncomingMessage {
+        if let _ = message as? TSIncomingMessage {
             let receivedDate = message.dateForSorting()
             rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_RECEIVED_DATE_TIME",
                                                          comment: "Label for the 'received date & time' field of the 'message metadata' view."),
@@ -164,41 +133,6 @@ class MessageMetadataViewController: OWSViewController
         }
 
         // TODO: We could include the "disappearing messages" state here.
-
-        //            @property (nullable, nonatomic) NSString *body;
-        //
-        //            @property (atomic, readonly) TSOutgoingMessageState messageState;
-        //
-        //            // The message has been sent to the service and received by at least one recipient client.
-        //            // A recipient may have more than one client, and group message may have more than one recipient.
-        //            @property (atomic, readonly) BOOL wasDelivered;
-        //
-        //            @property (atomic, readonly) BOOL hasSyncedTranscript;
-        //            @property (atomic, readonly) NSString *customMessage;
-        //            @property (atomic, readonly) NSString *mostRecentFailureText;
-        //            // A map of attachment id-to-"source" filename.
-        //            @property (nonatomic, readonly) NSMutableDictionary<NSString *, NSString *> *attachmentFilenameMap;
-        //
-        //            @property (atomic, readonly) TSGroupMetaMessage groupMetaMessage;
-        //            //
-        //            #pragma mark - Sent Recipients
-        //
-        //            - (NSUInteger)sentRecipientsCount;
-        //            - (BOOL)wasSentToRecipient:(NSString *)contactId;
-        //            - (void)updateWithSentRecipient:(NSString *)contactId transaction:(YapDatabaseReadWriteTransaction *)transaction;
-        //            - (void)updateWithSentRecipient:(NSString *)contactId;
-        //
-        //            @end
-        //
-        //            NS_ASSUME_NONNULL_END
-        //
-        //
-        DispatchQueue.main.async {
-            //                Logger.error("senderRow: \(NSStringFromCGRect(senderRow.frame))")
-            Logger.error("scrollView: \(NSStringFromCGRect(scrollView.frame))")
-            Logger.error("scrollView: \(NSStringFromCGSize(scrollView.contentSize))")
-            Logger.error("contentView: \(NSStringFromCGRect(contentView.frame))")
-        }
 
         if message.attachmentIds.count > 0 {
             let attachmentId = message.attachmentIds[0] as! String
@@ -259,10 +193,25 @@ class MessageMetadataViewController: OWSViewController
                 }
             }
         } else if let messageBody = message.body {
+            // TODO: We should also display "oversize text messages" in a
+            //       similar way.
             if messageBody.characters.count > 0 {
+                rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_BODY_LABEL",
+                                                             comment: "Label for the message body in the 'message metadata' view."),
+                                     value:""))
 
+                let bodyLabel = UILabel()
+                bodyLabel.textColor = UIColor.black
+                bodyLabel.font = UIFont.ows_regularFont(withSize:14)
+                bodyLabel.text = messageBody
+                bodyLabel.numberOfLines = 0
+                bodyLabel.lineBreakMode = .byWordWrapping
+                rows.append(bodyLabel)
             } else {
                 // Neither attachment nor body.
+                rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_NO_ATTACHMENT_OR_BODY",
+                                                             comment: "Label for messages without a body or attachment in the 'message metadata' view."),
+                                     value:""))
             }
         }
 
@@ -287,6 +236,8 @@ class MessageMetadataViewController: OWSViewController
         if let mediaMessageView = mediaMessageView {
             mediaMessageView.autoPinToSquareAspectRatio()
         }
+
+        // TODO: We might want to add a footer with share/save/copy/etc.
     }
 
     private func recipientStatus(forOutgoingMessage message: TSOutgoingMessage, recipientId: String) -> String {
@@ -331,7 +282,6 @@ class MessageMetadataViewController: OWSViewController
     private func nameLabel(text: String) -> UILabel {
         let label = UILabel()
         label.textColor = UIColor.black
-        label.textColor = UIColor.ows_darkGray()
         label.font = UIFont.ows_mediumFont(withSize:14)
         label.text = text
         label.setContentHuggingHorizontalHigh()
@@ -375,136 +325,4 @@ class MessageMetadataViewController: OWSViewController
 
         return row
     }
-
-    //    private func labelFont() -> UIFont {
-    //        return UIFont.ows_regularFont(withSize:ScaleFromIPhone5To7Plus(18, 24))
-    //    }
-    //
-    //    private func formattedFileExtension() -> String? {
-    //        guard let fileExtension = attachment.fileExtension else {
-    //            return nil
-    //        }
-    //
-    //        return String(format:NSLocalizedString("ATTACHMENT_APPROVAL_FILE_EXTENSION_FORMAT",
-    //                                               comment: "Format string for file extension label in call interstitial view"),
-    //                      fileExtension.uppercased())
-    //    }
-    //
-    //    private func formattedFileName() -> String? {
-    //        guard let sourceFilename = attachment.sourceFilename else {
-    //            return nil
-    //        }
-    //        let filename = sourceFilename.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-    //        guard filename.characters.count > 0 else {
-    //            return nil
-    //        }
-    //        return filename
-    //    }
-    //
-    //    private func createFileNameLabel() -> UIView? {
-    //        let filename = formattedFileName() ?? formattedFileExtension()
-    //
-    //        guard filename != nil else {
-    //            return nil
-    //        }
-    //
-    //        let label = UILabel()
-    //        label.text = filename
-    //        label.textColor = UIColor.ows_materialBlue()
-    //        label.font = labelFont()
-    //        label.textAlignment = .center
-    //        label.lineBreakMode = .byTruncatingMiddle
-    //        return label
-    //    }
-    //
-    //    private func createFileSizeLabel() -> UIView {
-    //        let label = UILabel()
-    //        let fileSize = attachment.dataLength
-    //        label.text = String(format:NSLocalizedString("ATTACHMENT_APPROVAL_FILE_SIZE_FORMAT",
-    //                                                     comment: "Format string for file size label in call interstitial view. Embeds: {{file size as 'N mb' or 'N kb'}}."),
-    //                            ViewControllerUtils.formatFileSize(UInt(fileSize)))
-    //
-    //        label.textColor = UIColor.ows_materialBlue()
-    //        label.font = labelFont()
-    //        label.textAlignment = .center
-    //
-    //        return label
-    //    }
-    //
-    //    private func createAudioStatusLabel() -> UILabel {
-    //        let label = UILabel()
-    //        label.textColor = UIColor.ows_materialBlue()
-    //        label.font = labelFont()
-    //        label.textAlignment = .center
-    //
-    //        return label
-    //    }
-    //
-    //    private func createButtonRow(attachmentPreviewView: UIView) {
-    //        let buttonTopMargin = ScaleFromIPhone5To7Plus(30, 40)
-    //        let buttonBottomMargin = ScaleFromIPhone5To7Plus(25, 40)
-    //        let buttonHSpacing = ScaleFromIPhone5To7Plus(20, 30)
-    //
-    //        let buttonRow = UIView()
-    //        self.view.addSubview(buttonRow)
-    //        buttonRow.autoPinWidthToSuperview()
-    //        buttonRow.autoPinEdge(toSuperviewEdge:.bottom, withInset:buttonBottomMargin)
-    //        buttonRow.autoPinEdge(.top, to:.bottom, of:attachmentPreviewView, withOffset:buttonTopMargin)
-    //
-    //        // We use this invisible subview to ensure that the buttons are centered
-    //        // horizontally.
-    //        let buttonSpacer = UIView()
-    //        buttonRow.addSubview(buttonSpacer)
-    //        // Vertical positioning of this view doesn't matter.
-    //        buttonSpacer.autoPinEdge(toSuperviewEdge:.top)
-    //        buttonSpacer.autoSetDimension(.width, toSize:buttonHSpacing)
-    //        buttonSpacer.autoHCenterInSuperview()
-    //
-    //        let cancelButton = createButton(title: CommonStrings.cancelButton,
-    //                                        color : UIColor.ows_destructiveRed(),
-    //                                        action: #selector(cancelPressed))
-    //        buttonRow.addSubview(cancelButton)
-    //        cancelButton.autoPinEdge(toSuperviewEdge:.top)
-    //        cancelButton.autoPinEdge(toSuperviewEdge:.bottom)
-    //        cancelButton.autoPinEdge(.right, to:.left, of:buttonSpacer)
-    //
-    //        let sendButton = createButton(title: NSLocalizedString("ATTACHMENT_APPROVAL_SEND_BUTTON",
-    //                                                               comment: "Label for 'send' button in the 'attachment approval' dialog."),
-    //                                      color : UIColor(rgbHex:0x2ecc71),
-    //                                      action: #selector(sendPressed))
-    //        buttonRow.addSubview(sendButton)
-    //        sendButton.autoPinEdge(toSuperviewEdge:.top)
-    //        sendButton.autoPinEdge(toSuperviewEdge:.bottom)
-    //        sendButton.autoPinEdge(.left, to:.right, of:buttonSpacer)
-    //    }
-    //
-    //    private func createButton(title: String, color: UIColor, action: Selector) -> UIView {
-    //        let buttonWidth = ScaleFromIPhone5To7Plus(110, 140)
-    //        let buttonHeight = ScaleFromIPhone5To7Plus(35, 45)
-    //
-    //        return OWSFlatButton.button(title:title,
-    //                                    titleColor:UIColor.white,
-    //                                    backgroundColor:color,
-    //                                    width:buttonWidth,
-    //                                    height:buttonHeight,
-    //                                    target:target,
-    //                                    selector:action)
-    //    }
-    //
-    //    // MARK: - Event Handlers
-    //
-    //    func donePressed(sender: UIButton) {
-    //        dismiss(animated: true, completion:nil)
-    //    }
-    //
-    //    func cancelPressed(sender: UIButton) {
-    //        dismiss(animated: true, completion:nil)
-    //    }
-    //
-    //    func sendPressed(sender: UIButton) {
-    //        let successCompletion = self.successCompletion
-    //        dismiss(animated: true, completion: {
-    //            successCompletion?()
-    //        })
-    //    }
 }
