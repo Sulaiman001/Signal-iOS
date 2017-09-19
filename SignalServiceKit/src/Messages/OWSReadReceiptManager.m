@@ -147,7 +147,7 @@ NSString *const OWSOutgoingMessageFinderExtensionName = @"OWSOutgoingMessageFind
 
 NSString *const OWSReadReceiptManagerCollection = @"OWSReadReceiptManagerCollection";
 NSString *const OWSReadReceiptManagerAreReadReceiptsEnabled = @"areReadReceiptsEnabled";
-NSString *const OWSRecipientReadReceiptCollection = @"OWSRecipientReadReceiptCollection";
+NSString *const OWSRecipientReadReceiptCollection = @"OWSRecipientReadReceiptCollection2";
 
 @interface OWSReadReceiptManager ()
 
@@ -442,32 +442,35 @@ NSString *const OWSRecipientReadReceiptCollection = @"OWSRecipientReadReceiptCol
     NSString *recipientId = envelope.source;
     OWSAssert(recipientId.length > 0);
 
-    PBArray *timestamps = receiptMessage.timestamp;
+    PBArray *sentTimestamps = receiptMessage.timestamp;
+    UInt64 readTimestamp = envelope.timestamp;
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         [self.dbConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
-            for (int i = 0; i < timestamps.count; i++) {
-                UInt64 timestamp = [timestamps uint64AtIndex:i];
+            for (int i = 0; i < sentTimestamps.count; i++) {
+                UInt64 sentTimestamp = [sentTimestamps uint64AtIndex:i];
 
                 NSArray<TSOutgoingMessage *> *messages =
-                    [self.outgoingMessageFinder outgoingMessagesWithTimestamp:timestamp transaction:transaction];
+                    [self.outgoingMessageFinder outgoingMessagesWithTimestamp:sentTimestamp transaction:transaction];
                 OWSAssert(messages.count <= 1);
                 if (messages.count > 0) {
                     // TODO: We might also need to "mark as read by recipient" any older messages
                     // from us in that thread.  Or maybe this state should hang on the thread?
                     for (TSOutgoingMessage *message in messages) {
-                        [message updateWithReadRecipient:recipientId transaction:transaction];
+                        [message updateWithReadRecipient:recipientId
+                                           readTimestamp:readTimestamp
+                                             transaction:transaction];
                     }
                 } else {
                     // Persist the read receipts so that we can apply them to outgoing messages
                     // that we learn about later through sync messages.
-                    NSString *storageKey = [NSString stringWithFormat:@"%llu", timestamp];
-                    NSSet<NSString *> *recipientIds =
+                    NSString *storageKey = [NSString stringWithFormat:@"%llu", sentTimestamp];
+                    NSDictionary<NSString *, NSNumber *> *recipientIdMap =
                         [transaction objectForKey:storageKey inCollection:OWSRecipientReadReceiptCollection];
-                    NSMutableSet<NSString *> *recipientIdsCopy
-                        = (recipientIds ? [recipientIds mutableCopy] : [NSMutableSet new]);
-                    [recipientIdsCopy addObject:recipientId];
-                    [transaction setObject:recipientIdsCopy
+                    NSMutableDictionary<NSString *, NSNumber *> *recipientIdMapCopy
+                        = (recipientIdMap ? [recipientIdMap mutableCopy] : [NSMutableDictionary new]);
+                    recipientIdMapCopy[recipientId] = @(readTimestamp);
+                    [transaction setObject:recipientIdMapCopy
                                     forKey:storageKey
                               inCollection:OWSRecipientReadReceiptCollection];
                 }
@@ -483,12 +486,15 @@ NSString *const OWSRecipientReadReceiptCollection = @"OWSRecipientReadReceiptCol
     OWSAssert(transaction);
 
     NSString *storageKey = [NSString stringWithFormat:@"%llu", message.timestamp];
-    NSSet<NSString *> *recipientIds =
+    NSDictionary<NSString *, NSNumber *> *recipientIdMap =
         [transaction objectForKey:storageKey inCollection:OWSRecipientReadReceiptCollection];
-    if (recipientIds) {
-        OWSAssert(recipientIds.count > 0);
-        for (NSString *recipientId in recipientIds) {
-            [message updateWithReadRecipient:recipientId transaction:transaction];
+    if (recipientIdMap) {
+        OWSAssert(recipientIdMap.count > 0);
+        for (NSString *recipientId in recipientIdMap) {
+            NSNumber *readTimestamp = recipientIdMap[recipientId];
+            [message updateWithReadRecipient:recipientId
+                               readTimestamp:readTimestamp.unsignedLongLongValue
+                                 transaction:transaction];
         }
     }
     [transaction removeObjectForKey:storageKey inCollection:OWSRecipientReadReceiptCollection];

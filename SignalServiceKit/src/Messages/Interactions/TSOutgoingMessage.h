@@ -101,8 +101,8 @@ typedef NS_ENUM(NSInteger, TSGroupMetaMessage) {
 
 @property (nonatomic, readonly) BOOL isVoiceMessage;
 
-// The recipient ids of the recipients who have read the message.
-@property (atomic, readonly) NSSet<NSString *> *readRecipientIds;
+// Map of "recipient id"-to-"read time" of the recipients who have read the message.
+@property (atomic, readonly) NSDictionary<NSString *, NSNumber *> *recipientReadMap;
 
 /**
  * Signal Identifier (e.g. e164 number) or nil if in a group thread.
@@ -173,7 +173,9 @@ typedef NS_ENUM(NSInteger, TSGroupMetaMessage) {
 - (void)updateWithWasSentAndDeliveredWithTransaction:(YapDatabaseReadWriteTransaction *)transaction;
 - (void)updateWithSingleGroupRecipient:(NSString *)singleGroupRecipient
                            transaction:(YapDatabaseReadWriteTransaction *)transaction;
-- (void)updateWithReadRecipient:(NSString *)recipientId transaction:(YapDatabaseReadWriteTransaction *)transaction;
+- (void)updateWithReadRecipient:(NSString *)recipientId
+                  readTimestamp:(uint64_t)readTimestamp
+                    transaction:(YapDatabaseReadWriteTransaction *)transaction;
 
 #pragma mark - Sent Recipients
 
