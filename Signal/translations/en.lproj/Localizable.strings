@@ -829,11 +829,18 @@
 /* Label for voice messages of the 'message metadata' view. */
 "MESSAGE_METADATA_VIEW_VOICE_MESSAGE" = "Voice Note";
 
-/* message footer for delivered messages */
+/* message footer for delivered messages
+   message status for message delivered to their recipient. */
 "MESSAGE_STATUS_DELIVERED" = "Delivered";
 
 /* message footer for failed messages */
 "MESSAGE_STATUS_FAILED" = "Sending failed. Tap for info.";
+
+/* message status for messages read by the recipient. Embeds: {{the date and time the message was read}}. */
+"MESSAGE_STATUS_READ_WITH_TIMESTAMP_FORMAT" = "Read %@";
+
+/* message status while message is sending. */
+"MESSAGE_STATUS_SENDING" = "Sending...";
 
 /* message footer for sent messages */
 "MESSAGE_STATUS_SENT" = "Sent";

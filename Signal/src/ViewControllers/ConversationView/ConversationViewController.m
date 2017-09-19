@@ -2145,7 +2145,7 @@ typedef NS_ENUM(NSInteger, MessagesRangeSizeMode) {
                     ? NSLocalizedString(@"MESSAGE_STATUS_DELIVERED", @"message footer for delivered messages")
                     : NSLocalizedString(@"MESSAGE_STATUS_SENT", @"message footer for sent messages"));
             NSAttributedString *result = [[NSAttributedString alloc] initWithString:text];
-            if (outgoingMessage.wasDelivered && outgoingMessage.readRecipientIds.count > 0) {
+            if (outgoingMessage.wasDelivered && outgoingMessage.recipientReadMap.count > 0) {
                 NSAttributedString *checkmark = [[NSAttributedString alloc]
                     initWithString:@"\uf00c "
                         attributes:@{
