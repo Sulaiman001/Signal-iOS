@@ -1,6 +1,8 @@
-//  Created by Frederic Jacobs on 25/11/14.
-//  Copyright (c) 2014 Open Whisper Systems. All rights reserved.
+//
+//  Copyright (c) 2017 Open Whisper Systems. All rights reserved.
+//
 
+NS_ASSUME_NONNULL_BEGIN
 
 @interface NSDate (millisecondTimeStamp)
 
@@ -9,3 +11,5 @@
 + (uint64_t)ows_millisecondsSince1970ForDate:(NSDate *)date;
 
 @end
+
+NS_ASSUME_NONNULL_END

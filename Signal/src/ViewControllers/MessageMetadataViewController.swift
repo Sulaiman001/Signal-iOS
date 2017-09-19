@@ -15,19 +15,15 @@ class MessageMetadataViewController: OWSViewController
 
     let message: TSMessage
 
+    var mediaMessageView: MediaMessageView?
+
+    var scrollView: UIScrollView?
+    var contentView: UIView?
+
 //    let attachment: SignalAttachment
 //
 //    var successCompletion : (() -> Void)?
 //
-//    var videoPlayer: MPMoviePlayerController?
-//
-//    var audioPlayer: OWSAudioAttachmentPlayer?
-//    var audioStatusLabel: UILabel?
-//    var audioPlayButton: UIButton?
-//    var isAudioPlayingFlag = false
-//    var isAudioPaused = false
-//    var audioProgressSeconds: CGFloat = 0
-//    var audioDurationSeconds: CGFloat = 0
 
     // MARK: Initializers
 
@@ -48,12 +44,22 @@ class MessageMetadataViewController: OWSViewController
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        view.backgroundColor = UIColor.white
-
         self.navigationItem.title = NSLocalizedString("MESSAGE_METADATA_VIEW_TITLE",
                                                       comment: "Title for the 'message metadata' view.")
 
-//        createViews()
+        createViews()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+
+        mediaMessageView?.viewWillAppear(animated)
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+
+        mediaMessageView?.viewWillDisappear(animated)
     }
 
 //    override func viewWillAppear(_ animated: Bool) {
@@ -67,33 +73,245 @@ class MessageMetadataViewController: OWSViewController
 //
 //        ViewControllerUtils.setAudioIgnoresHardwareMuteSwitch(false)
 //    }
+
+    // MARK: - Create Views
+
+    private func createViews() {
+        view.backgroundColor = UIColor.white
+
+        let scrollView = UIScrollView()
+        self.scrollView = scrollView
+        view.addSubview(scrollView)
+        scrollView.autoPinWidthToSuperview(withMargin:0)
+        scrollView.autoPin(toTopLayoutGuideOf: self, withInset:0)
+        scrollView.autoPin(toBottomLayoutGuideOf: self, withInset:0)
+
+        // See notes on how to use UIScrollView with iOS Auto Layout:
+        //
+        // https://developer.apple.com/library/content/releasenotes/General/RN-iOSSDK-6_0/
+        let contentView = UIView.container()
+        self.contentView = contentView
+        scrollView.addSubview(contentView)
+        contentView.autoPinLeadingToSuperView()
+        contentView.autoPinTrailingToSuperView()
+        contentView.autoPinEdge(toSuperviewEdge:.top)
+        contentView.autoPinEdge(toSuperviewEdge:.bottom)
+
+        var rows = [UIView]()
+
+        if let incomingMessage = message as? TSIncomingMessage {
+            rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_SENDER_ID",
+                                                         comment: "Label for the 'sender id' field of the 'message metadata' view."),
+                                 value:incomingMessage.authorId))
+
+            let senderName = OWSProfileManager.shared().profileName(forRecipientId:incomingMessage.authorId)
+            if let senderName = senderName {
+                if senderName.characters.count > 0 {
+                    rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_SENDER_NAME",
+                                                                 comment: "Label for the 'sender name' field of the 'message metadata' view."),
+                                         value:senderName))
+                }
+            }
+        }
+
+        if let outgoingMessage = message as? TSOutgoingMessage {
+//            rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_SENDER_ID",
+//                                                         comment: "Label for the 'sender id' field of the 'message metadata' view."),
+//                                 value:incomingMessage.authorId))
+//            
+//            let senderName = OWSProfileManager.shared().profileName(forRecipientId:incomingMessage.authorId)
+//            if let senderName = senderName {
+//                if senderName.characters.count > 0 {
+//                    rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_SENDER_NAME",
+//                                                                 comment: "Label for the 'sender name' field of the 'message metadata' view."),
+//                                         value:senderName))
+//                }
+//            }
+        }
+
+        let dateFormatter = DateFormatter()
+//        dateFormatter.timeZone = TimeZone(abbreviation: "UTC")
+//        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+        dateFormatter.dateStyle = .short
+        dateFormatter.timeStyle = .long
+
+        let sentDate = NSDate.ows_date(withMillisecondsSince1970:message.timestamp)
+        rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_SENT_DATE_TIME",
+                                                     comment: "Label for the 'sent date & time' field of the 'message metadata' view."),
+                             value:dateFormatter.string(from:sentDate)))
+
+        if let incomingMessage = message as? TSIncomingMessage {
+            let receivedDate = message.dateForSorting()
+            rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_RECEIVED_DATE_TIME",
+                                                         comment: "Label for the 'received date & time' field of the 'message metadata' view."),
+                                 value:dateFormatter.string(from:receivedDate)))
+        }
+
+//        @end
+//            @property (nonatomic, readonly) NSMutableArray<NSString *> *attachmentIds;
+//            @property (nullable, nonatomic) NSString *body;
+//            @property (nonatomic) uint32_t expiresInSeconds;
+//            @property (nonatomic) uint64_t expireStartedAt;
+//            @property (nonatomic, readonly) uint64_t expiresAt;
+//            @property (nonatomic, readonly) BOOL isExpiringMessage;
+//            @property (nonatomic, readonly) BOOL shouldStartExpireTimer;
+
+//            @property (nonatomic, readonly) NSString *uniqueThreadId;
+//            @property (nonatomic, readonly) TSThread *thread;
+//            @property (nonatomic, readonly) uint64_t timestamp;
+//            
+//            - (NSString *)description;
+//            
+//            /**
+//             * When an interaction is updated, it often affects the UI for it's containing thread. Touching it's thread will notify
+//             * any observers so they can redraw any related UI.
+//             */
+//            - (void)touchThreadWithTransaction:(YapDatabaseReadWriteTransaction *)transaction;
+//            
+//            #pragma mark Utility Method
+//            
+//            + (instancetype)interactionForTimestamp:(uint64_t)timestamp
+//            withTransaction:(YapDatabaseReadWriteTransaction *)transaction;
+//            
+//            - (NSDate *)dateForSorting;
+//            - (uint64_t)timestampForSorting;
+//            - (NSComparisonResult)compareForSorting:(TSInteraction *)other;
 //
-//    // MARK: - Create Views
+//            @end
+//            
+//            NS_ASSUME_NONNULL_END
+
+//            @property (atomic, readonly) TSOutgoingMessageState messageState;
+//            
+//            // The message has been sent to the service and received by at least one recipient client.
+//            // A recipient may have more than one client, and group message may have more than one recipient.
+//            @property (atomic, readonly) BOOL wasDelivered;
+//            
+//            @property (atomic, readonly) BOOL hasSyncedTranscript;
+//            @property (atomic, readonly) NSString *customMessage;
+//            @property (atomic, readonly) NSString *mostRecentFailureText;
+//            // A map of attachment id-to-"source" filename.
+//            @property (nonatomic, readonly) NSMutableDictionary<NSString *, NSString *> *attachmentFilenameMap;
+//            
+//            @property (atomic, readonly) TSGroupMetaMessage groupMetaMessage;
+//            
+//            // If set, this group message should only be sent to a single recipient.
+//            @property (atomic, readonly) NSString *singleGroupRecipient;
 //
-//    private func createViews() {
-//        let previewTopMargin: CGFloat = 30
-//        let previewHMargin: CGFloat = 20
+//            // The recipient ids of the recipients who have read the message.
+//            @property (atomic, readonly) NSSet<NSString *> *readRecipientIds;
+//            
+//            /**
+//             * Signal Identifier (e.g. e164 number) or nil if in a group thread.
+//             */
+//            - (nullable NSString *)recipientIdentifier;
 //
-//        let attachmentPreviewView = UIView()
-//        self.view.addSubview(attachmentPreviewView)
-//        attachmentPreviewView.autoPinWidthToSuperview(withMargin:previewHMargin)
-//        attachmentPreviewView.autoPin(toTopLayoutGuideOf: self, withInset:previewTopMargin)
+//            #pragma mark - Sent Recipients
+//            
+//            - (NSUInteger)sentRecipientsCount;
+//            - (BOOL)wasSentToRecipient:(NSString *)contactId;
+//            - (void)updateWithSentRecipient:(NSString *)contactId transaction:(YapDatabaseReadWriteTransaction *)transaction;
+//            - (void)updateWithSentRecipient:(NSString *)contactId;
+//            
+//            @end
+//            
+//            NS_ASSUME_NONNULL_END
 //
-//        createButtonRow(attachmentPreviewView:attachmentPreviewView)
-//
-//        if attachment.isAnimatedImage {
-//            createAnimatedPreview(attachmentPreviewView:attachmentPreviewView)
-//        } else if attachment.isImage {
-//            createImagePreview(attachmentPreviewView:attachmentPreviewView)
-//        } else if attachment.isVideo {
-//            createVideoPreview(attachmentPreviewView:attachmentPreviewView)
-//        } else if attachment.isAudio {
-//            createAudioPreview(attachmentPreviewView:attachmentPreviewView)
-//        } else {
-//            createGenericPreview(attachmentPreviewView:attachmentPreviewView)
+//            
+            DispatchQueue.main.async {
+//                Logger.error("senderRow: \(NSStringFromCGRect(senderRow.frame))")
+                Logger.error("scrollView: \(NSStringFromCGRect(scrollView.frame))")
+                Logger.error("scrollView: \(NSStringFromCGSize(scrollView.contentSize))")
+                Logger.error("contentView: \(NSStringFromCGRect(contentView.frame))")
+                }
+
+        if message.attachmentIds.count > 0 {
+            let attachmentId = message.attachmentIds[0] as! String
+            let attachment = TSAttachment.fetch(uniqueId:attachmentId)
+            if let attachment = attachment {
+                let contentType = attachment.contentType
+                rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_ATTACHMENT_MIME_TYPE",
+                                                             comment: "Label for the MIME type of attachments in the 'message metadata' view."),
+                                     value:contentType))
+
+                if let sourceFilename = attachment.sourceFilename {
+                rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_SOURCE_FILENAME",
+                                                             comment: "Label for the original filename of any attachment in the 'message metadata' view."),
+                                     value:sourceFilename))
+                }
+
+                if attachment.isVoiceMessage() {
+                    rows.append(valueRow(name: NSLocalizedString("MESSAGE_METADATA_VIEW_VOICE_MESSAGE",
+                                                                 comment: "Label for voice messages of the 'message metadata' view."),
+                                         value:""))
+                }
+            }
+        } else if let messageBody = message.body {
+            if messageBody.characters.count > 0 {
+
+            } else {
+                // Neither attachment nor body.
+            }
+        }
+
+        var lastRow: UIView?
+        for row in rows {
+            contentView.addSubview(row)
+            row.autoPinLeadingToSuperView()
+            row.autoPinTrailingToSuperView()
+
+            if let lastRow = lastRow {
+                row.autoPinEdge(.top, to:.bottom, of:lastRow, withOffset:5)
+            } else {
+                row.autoPinEdge(toSuperviewEdge:.top, withInset:20)
+            }
+
+            lastRow = row
+        }
+        if let lastRow = lastRow {
+            lastRow.autoPinEdge(toSuperviewEdge:.bottom, withInset:20)
+        }
+    }
+
+    private func nameLabel(text: String) -> UILabel {
+        let label = UILabel()
+        label.textColor = UIColor.black
+        label.font = UIFont.ows_mediumFont(withSize:14)
+        label.text = text
+        return label
+    }
+
+    private func valueLabel(text: String) -> UILabel {
+        let label = UILabel()
+        label.textColor = UIColor.black
+        label.font = UIFont.ows_regularFont(withSize:14)
+        label.text = text
+        return label
+    }
+
+    private func valueRow(name: String, value: String) -> UIView {
+        let row = UIView.container()
+        let nameLabel = self.nameLabel(text:name)
+        let valueLabel = self.valueLabel(text:value)
+        row.addSubview(nameLabel)
+        row.addSubview(valueLabel)
+        nameLabel.autoPinLeadingToSuperView()
+        valueLabel.autoPinTrailingToSuperView()
+        valueLabel.autoPinLeading(toTrailingOf:nameLabel, margin: 10)
+        nameLabel.autoPinEdge(toSuperviewEdge:.top)
+        valueLabel.autoPinEdge(toSuperviewEdge:.top)
+        valueLabel.autoPinEdge(toSuperviewEdge:.bottom)
+
+//        DispatchQueue.main.async {
+//            Logger.error("nameLabel: \(NSStringFromCGRect(nameLabel.frame)) \(name)")
+//            Logger.error("nameLabel: \(NSStringFromCGSize(nameLabel.sizeThatFits(CGSize.zero)))")
+//            Logger.error("valueLabel: \(NSStringFromCGRect(valueLabel.frame)) \(value)")
+//            Logger.error("valueLabel: \(NSStringFromCGSize(valueLabel.sizeThatFits(CGSize.zero)))")
+//            Logger.error("row: \(NSStringFromCGRect(row.frame))")
 //        }
-//    }
-//
+        return row
+    }
+
 //    private func wrapViewsInVerticalStack(subviews: [UIView]) -> UIView {
 //        assert(subviews.count > 0)
 //
@@ -118,148 +336,7 @@ class MessageMetadataViewController: OWSViewController
 //
 //        return stackView
 //    }
-//
-//    private func createAudioPreview(attachmentPreviewView: UIView) {
-//        guard let dataUrl = attachment.dataUrl else {
-//            createGenericPreview(attachmentPreviewView:attachmentPreviewView)
-//            return
-//        }
-//
-//        audioPlayer = OWSAudioAttachmentPlayer(mediaUrl: dataUrl, delegate: self)
-//
-//        var subviews = [UIView]()
-//
-//        let audioPlayButton = UIButton()
-//        self.audioPlayButton = audioPlayButton
-//        setAudioIconToPlay()
-//        audioPlayButton.imageView?.layer.minificationFilter = kCAFilterTrilinear
-//        audioPlayButton.imageView?.layer.magnificationFilter = kCAFilterTrilinear
-//        audioPlayButton.addTarget(self, action:#selector(audioPlayButtonPressed), for:.touchUpInside)
-//        let buttonSize = createHeroViewSize()
-//        audioPlayButton.autoSetDimension(.width, toSize:buttonSize)
-//        audioPlayButton.autoSetDimension(.height, toSize:buttonSize)
-//        subviews.append(audioPlayButton)
-//
-//        let fileNameLabel = createFileNameLabel()
-//        if let fileNameLabel = fileNameLabel {
-//            subviews.append(fileNameLabel)
-//        }
-//
-//        let fileSizeLabel = createFileSizeLabel()
-//        subviews.append(fileSizeLabel)
-//
-//        let audioStatusLabel = createAudioStatusLabel()
-//        self.audioStatusLabel = audioStatusLabel
-//        updateAudioStatusLabel()
-//        subviews.append(audioStatusLabel)
-//
-//        let stackView = wrapViewsInVerticalStack(subviews:subviews)
-//        attachmentPreviewView.addSubview(stackView)
-//        fileNameLabel?.autoPinWidthToSuperview(withMargin: 32)
-//        stackView.autoPinWidthToSuperview()
-//        stackView.autoVCenterInSuperview()
-//    }
-//
-//    private func createAnimatedPreview(attachmentPreviewView: UIView) {
-//        guard attachment.isValidImage else {
-//            return
-//        }
-//        let data = attachment.data
-//        // Use Flipboard FLAnimatedImage library to display gifs
-//        guard let animatedImage = FLAnimatedImage(gifData:data) else {
-//            createGenericPreview(attachmentPreviewView:attachmentPreviewView)
-//            return
-//        }
-//        let animatedImageView = FLAnimatedImageView()
-//        animatedImageView.animatedImage = animatedImage
-//        animatedImageView.contentMode = .scaleAspectFit
-//        attachmentPreviewView.addSubview(animatedImageView)
-//        animatedImageView.autoPinWidthToSuperview()
-//        animatedImageView.autoPinHeightToSuperview()
-//    }
-//
-//    private func createImagePreview(attachmentPreviewView: UIView) {
-//        var image = attachment.image
-//        if image == nil {
-//            image = UIImage(data:attachment.data)
-//        }
-//        guard image != nil else {
-//            createGenericPreview(attachmentPreviewView:attachmentPreviewView)
-//            return
-//        }
-//
-//        let imageView = UIImageView(image:image)
-//        imageView.layer.minificationFilter = kCAFilterTrilinear
-//        imageView.layer.magnificationFilter = kCAFilterTrilinear
-//        imageView.contentMode = .scaleAspectFit
-//        attachmentPreviewView.addSubview(imageView)
-//        imageView.autoPinWidthToSuperview()
-//        imageView.autoPinHeightToSuperview()
-//    }
-//
-//    private func createVideoPreview(attachmentPreviewView: UIView) {
-//        guard let dataUrl = attachment.dataUrl else {
-//            createGenericPreview(attachmentPreviewView:attachmentPreviewView)
-//            return
-//        }
-//        guard let videoPlayer = MPMoviePlayerController(contentURL:dataUrl) else {
-//            createGenericPreview(attachmentPreviewView:attachmentPreviewView)
-//            return
-//        }
-//        videoPlayer.prepareToPlay()
-//
-//        videoPlayer.controlStyle = .default
-//        videoPlayer.shouldAutoplay = false
-//
-//        attachmentPreviewView.addSubview(videoPlayer.view)
-//        self.videoPlayer = videoPlayer
-//        videoPlayer.view.autoPinWidthToSuperview()
-//        videoPlayer.view.autoPinHeightToSuperview()
-//    }
-//
-//    private func createGenericPreview(attachmentPreviewView: UIView) {
-//        var subviews = [UIView]()
-//
-//        let imageView = createHeroImageView(imageName: "file-thin-black-filled-large")
-//        subviews.append(imageView)
-//
-//        let fileNameLabel = createFileNameLabel()
-//        if let fileNameLabel = fileNameLabel {
-//            subviews.append(fileNameLabel)
-//        }
-//
-//        let fileSizeLabel = createFileSizeLabel()
-//        subviews.append(fileSizeLabel)
-//
-//        let stackView = wrapViewsInVerticalStack(subviews:subviews)
-//        attachmentPreviewView.addSubview(stackView)
-//        fileNameLabel?.autoPinWidthToSuperview(withMargin: 32)
-//        stackView.autoPinWidthToSuperview()
-//        stackView.autoVCenterInSuperview()
-//    }
-//
-//    private func createHeroViewSize() -> CGFloat {
-//        return ScaleFromIPhone5To7Plus(175, 225)
-//    }
-//
-//    private func createHeroImageView(imageName: String) -> UIView {
-//        let imageSize = createHeroViewSize()
-//        let image = UIImage(named:imageName)
-//        assert(image != nil)
-//        let imageView = UIImageView(image:image)
-//        imageView.layer.minificationFilter = kCAFilterTrilinear
-//        imageView.layer.magnificationFilter = kCAFilterTrilinear
-//        imageView.layer.shadowColor = UIColor.black.cgColor
-//        let shadowScaling = 5.0
-//        imageView.layer.shadowRadius = CGFloat(2.0 * shadowScaling)
-//        imageView.layer.shadowOpacity = 0.25
-//        imageView.layer.shadowOffset = CGSize(width: 0.75 * shadowScaling, height: 0.75 * shadowScaling)
-//        imageView.autoSetDimension(.width, toSize:imageSize)
-//        imageView.autoSetDimension(.height, toSize:imageSize)
-//
-//        return imageView
-//    }
-//
+////
 //    private func labelFont() -> UIFont {
 //        return UIFont.ows_regularFont(withSize:ScaleFromIPhone5To7Plus(18, 24))
 //    }
@@ -392,63 +469,4 @@ class MessageMetadataViewController: OWSViewController
 //        })
 //    }
 //
-//    func audioPlayButtonPressed(sender: UIButton) {
-//        audioPlayer?.togglePlayState()
-//    }
-//
-//    // MARK: - OWSAudioAttachmentPlayerDelegate
-//
-//    public func isAudioPlaying() -> Bool {
-//        return isAudioPlayingFlag
-//    }
-//
-//    public func setIsAudioPlaying(_ isAudioPlaying: Bool) {
-//        isAudioPlayingFlag = isAudioPlaying
-//
-//        updateAudioStatusLabel()
-//    }
-//
-//    public func isPaused() -> Bool {
-//        return isAudioPaused
-//    }
-//
-//    public func setIsPaused(_ isPaused: Bool) {
-//        isAudioPaused = isPaused
-//    }
-//
-//    public func setAudioProgress(_ progress: CGFloat, duration: CGFloat) {
-//        audioProgressSeconds = progress
-//        audioDurationSeconds = duration
-//
-//        updateAudioStatusLabel()
-//    }
-//
-//    private func updateAudioStatusLabel() {
-//        guard let audioStatusLabel = self.audioStatusLabel else {
-//            owsFail("Missing audio status label")
-//            return
-//        }
-//
-//        if isAudioPlayingFlag && audioProgressSeconds > 0 && audioDurationSeconds > 0 {
-//            audioStatusLabel.text = String(format:"%@ / %@",
-//                ViewControllerUtils.formatDurationSeconds(Int(round(self.audioProgressSeconds))),
-//                ViewControllerUtils.formatDurationSeconds(Int(round(self.audioDurationSeconds))))
-//        } else {
-//            audioStatusLabel.text = " "
-//        }
-//    }
-//
-//    public func setAudioIconToPlay() {
-//        let image = UIImage(named:"audio_play_black_large")?.withRenderingMode(.alwaysTemplate)
-//        assert(image != nil)
-//        audioPlayButton?.setImage(image, for:.normal)
-//        audioPlayButton?.imageView?.tintColor = UIColor.ows_materialBlue()
-//    }
-//
-//    public func setAudioIconToPause() {
-//        let image = UIImage(named:"audio_pause_black_large")?.withRenderingMode(.alwaysTemplate)
-//        assert(image != nil)
-//        audioPlayButton?.setImage(image, for:.normal)
-//        audioPlayButton?.imageView?.tintColor = UIColor.ows_materialBlue()
-//    }
 }

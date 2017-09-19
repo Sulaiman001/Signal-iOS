@@ -784,8 +784,29 @@
 /* No comment provided by engineer. */
 "MESSAGE_COMPOSEVIEW_TITLE" = "New Message";
 
+/* Label for the MIME type of attachments in the 'message metadata' view. */
+"MESSAGE_METADATA_VIEW_ATTACHMENT_MIME_TYPE" = "MIME type";
+
+/* Label for the 'received date & time' field of the 'message metadata' view. */
+"MESSAGE_METADATA_VIEW_RECEIVED_DATE_TIME" = "Received";
+
+/* Label for the 'sender id' field of the 'message metadata' view. */
+"MESSAGE_METADATA_VIEW_SENDER_ID" = "Sender";
+
+/* Label for the 'sender name' field of the 'message metadata' view. */
+"MESSAGE_METADATA_VIEW_SENDER_NAME" = "Sender Name";
+
+/* Label for the 'sent date & time' field of the 'message metadata' view. */
+"MESSAGE_METADATA_VIEW_SENT_DATE_TIME" = "Sent";
+
+/* Label for the original filename of any attachment in the 'message metadata' view. */
+"MESSAGE_METADATA_VIEW_SOURCE_FILENAME" = "Filename";
+
 /* Title for the 'message metadata' view. */
 "MESSAGE_METADATA_VIEW_TITLE" = "Message";
+
+/* Label for voice messages of the 'message metadata' view. */
+"MESSAGE_METADATA_VIEW_VOICE_MESSAGE" = "Voice Note";
 
 /* message footer for delivered messages */
 "MESSAGE_STATUS_DELIVERED" = "Delivered";
